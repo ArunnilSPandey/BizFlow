@@ -14,14 +14,16 @@ interface BankCardProps {
     isDragging: boolean;
     isSelected: boolean;
     isDropTarget: boolean;
+    isBanker: boolean;
 }
 
-export default function BankCard({ onDragStart, onDragEnd, onDrop, onClick, isDragging, isSelected, isDropTarget }: BankCardProps) {
+export default function BankCard({ onDragStart, onDragEnd, onDrop, onClick, isDragging, isSelected, isDropTarget, isBanker }: BankCardProps) {
     const [isDragOver, setIsDragOver] = useState(false);
+    const isDraggable = isBanker;
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        if (isDropTarget) {
+        if (isDropTarget && isBanker) {
             setIsDragOver(true);
         }
     };
@@ -32,15 +34,20 @@ export default function BankCard({ onDragStart, onDragEnd, onDrop, onClick, isDr
     
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        if (!isBanker) return;
         setIsDragOver(false);
         onDrop(BANK_PLAYER_ID);
     };
 
     return (
         <Card
-            draggable
-            onClick={onClick}
+            draggable={isDraggable}
+            onClick={isBanker ? onClick : () => {}}
             onDragStart={(e) => {
+                if (!isBanker) {
+                    e.preventDefault();
+                    return;
+                }
                 e.dataTransfer.setData('text/plain', BANK_PLAYER_ID);
                 onDragStart();
             }}
@@ -49,7 +56,9 @@ export default function BankCard({ onDragStart, onDragEnd, onDrop, onClick, isDr
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={cn(
-                'flex flex-col items-center justify-center text-center p-6 bg-secondary transition-shadow duration-200 ease-in-out cursor-grab active:cursor-grabbing shadow-lg hover:shadow-xl',
+                'flex flex-col items-center justify-center text-center p-6 bg-secondary transition-shadow duration-200 ease-in-out shadow-lg',
+                isBanker && 'cursor-grab active:cursor-grabbing hover:shadow-xl',
+                !isBanker && 'cursor-not-allowed',
                 (isDragOver || (isDropTarget && isSelected)) && 'ring-2 ring-primary ring-offset-2',
                 isDragging && 'opacity-50',
                 isSelected && 'shadow-2xl ring-2 ring-blue-500 ring-offset-2'
